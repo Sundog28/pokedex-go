@@ -1,0 +1,33 @@
+package pokeapi
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/Sundog28/pokedex-cli/internal/pokeapi"
+        "github.com/Sundog28/pokedex-cli/internal/pokecache"
+)
+
+var cache = pokecache.NewCache(5 * time.Second)
+
+func FetchURL(url string) ([]byte, error) {
+	if data, found := cache.Get(url); found {
+		fmt.Println("Cache hit:", url)
+		return data, nil
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	cache.Add(url, data)
+	return data, nil
+}
